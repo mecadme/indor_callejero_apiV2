@@ -93,7 +93,8 @@ public final class SecurityConfig {
                         // Cada dominio nuevo tiene que sumarse acá a mano -- es la
                         // fricción a propósito de SEC-03: si te olvidás, el dominio
                         // entero devuelve denyAll(), no queda público por accidente.
-                        .requestMatchers("/api/auth/**", "/api/users/**", "/api/teams/**", "/api/players/**")
+                        .requestMatchers("/api/auth/**", "/api/users/**", "/api/teams/**", "/api/players/**",
+                                "/api/matches/**", "/api/standings/**")
                         .authenticated()
                         .anyRequest().denyAll()
                 )

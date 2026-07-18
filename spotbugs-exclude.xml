@@ -92,4 +92,22 @@
         </Or>
     </Match>
 
+    <!--
+      CT_CONSTRUCTOR_THROW en *Entity: no lo arreglamos con "final" como en
+      JwtService/SecurityConfig (Etapa 5) a propósito. Esos son beans
+      planos que Spring nunca subclasea; una entidad JPA sí puede
+      necesitar que Hibernate genere un proxy de ella para carga LAZY el
+      día que otra entidad la referencie (ej. MatchEntity.homeTeam ya lo
+      hace con TeamEntity; el día que una LineUp o un evento de partido
+      referencie MatchEntity de forma LAZY, "final" rompería esa relación
+      en tiempo de ejecución). Constructores de entidad que validan
+      invariantes (MatchEntity: "un equipo no juega contra sí mismo") van
+      a seguir lanzando excepción a propósito: es la excepción correcta,
+      no un bug.
+    -->
+    <Match>
+        <Class name="~com\.indorcallejero\.api\..*Entity"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
 </FindBugsFilter>

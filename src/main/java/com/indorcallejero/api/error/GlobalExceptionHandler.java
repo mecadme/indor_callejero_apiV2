@@ -1,6 +1,7 @@
 package com.indorcallejero.api.error;
 
 import com.indorcallejero.api.auth.TooManyAttemptsException;
+import com.indorcallejero.api.match.InvalidMatchStateException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, "El recurso ya existe o viola una restricción de datos", request);
+    }
+
+    // Ej.: cargar un resultado sobre un partido que todavía no arrancó, o
+    // arrancar uno que ya terminó -- el request es válido en sí mismo,
+    // pero choca con el estado actual del recurso. Mismo código HTTP que
+    // DataIntegrityViolationException (409) por la misma razón semántica.
+    @ExceptionHandler(InvalidMatchStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidMatchState(InvalidMatchStateException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
