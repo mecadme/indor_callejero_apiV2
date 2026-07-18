@@ -1,0 +1,25 @@
+# Config exclusiva de tests -- nunca lee el .env real ni activa un perfil
+# dev/prod. Los tests tienen que poder correr en cualquier máquina (o en
+# CI, Etapa 5) sin que nadie tenga que configurar nada a mano primero.
+#
+# spring.datasource.* NO aparece acá: lo completa Testcontainers en
+# runtime vía @ServiceConnection, apuntando al contenedor MySQL efímero
+# que arranca cada corrida de tests (ver AbstractIntegrationTest).
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+security:
+  jwt:
+    secret: test-only-secret-nunca-usar-en-produccion-1234567890
+    issuer: indor-callejero-api-test
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 604800000
+    cookie-secure: false
+  cors:
+    allowed-origins: http://localhost:3000
+  rate-limit:
+    max-attempts: 5
+    window-seconds: 60
