@@ -26,9 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Etapa 10 (Redis) en vivo tiró dos bugs reales que ningún test unitario
- * hubiera visto: 1) GenericJackson2JsonRedisSerializer no puede reconstruir
- * un Page cacheado (arreglado con GenericJacksonJsonRedisSerializer +
- * RestPage, ver CacheConfig y RestPage), y 2) el validator de tipos
+ * hubiera visto: 1) el serializador de Jackson 2 para Redis no puede
+ * reconstruir un Page cacheado (arreglado con GenericJacksonJsonRedisSerializer,
+ * la variante de Jackson 3, + RestPage, ver CacheConfig y RestPage), y 2) el validator de tipos
  * polimórficos tiene que mirar la clase concreta con allowIfSubType, no el
  * tipo declarado con allowIfBaseType (arreglado en CacheConfig). Este test
  * prueba ambos caminos -- lectura repetida (cache hit real, no solo "no

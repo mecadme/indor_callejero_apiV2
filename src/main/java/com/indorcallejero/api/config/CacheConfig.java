@@ -26,14 +26,15 @@ import java.time.Duration;
  * @Cacheable hubiera explotado con NotSerializableException recién en
  * runtime, al primer intento de guardar algo en Redis.
  *
- * GenericJacksonJsonRedisSerializer (Jackson 3, tools.jackson.*), no
- * GenericJackson2JsonRedisSerializer (Jackson 2, com.fasterxml.jackson.*):
- * probado en vivo, el serializador Jackson 2 no puede reconstruir un
- * Page<T> cacheado (PageImpl no tiene constructor default ni Creator que
- * Jackson 2 reconozca -- InvalidDefinitionException recién al segundo
- * request, cuando intenta leer lo que el primer request escribió). El
- * mismo proyecto ya usa Jackson 3 en el resto de la app (ver el DTO
- * mapping), así que esto además evita mezclar dos versiones de Jackson.
+ * GenericJacksonJsonRedisSerializer (Jackson 3, tools.jackson.*), no su
+ * equivalente de Jackson 2 (com.fasterxml.jackson.*, deprecado desde
+ * Spring Data Redis 4.0 y ya marcado para remoción): probado en vivo, el
+ * serializador de Jackson 2 no puede reconstruir un Page<T> cacheado
+ * (PageImpl no tiene constructor default ni Creator que Jackson 2
+ * reconozca -- InvalidDefinitionException recién al segundo request,
+ * cuando intenta leer lo que el primer request escribió). El mismo
+ * proyecto ya usa Jackson 3 en el resto de la app (ver el DTO mapping),
+ * así que esto además evita mezclar dos versiones de Jackson.
  *
  * enableDefaultTyping(validator), probado en vivo también: sin esto, el
  * JSON cacheado no lleva metadata de tipo, y al leerlo Jackson devuelve un
