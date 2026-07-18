@@ -49,6 +49,22 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<!--
+			PERF-09 del audit: sin esto, un incidente a producción se
+			diagnostica a ciegas. spring-boot-starter-actuator expone
+			/actuator/health y /actuator/metrics; micrometer-registry-prometheus
+			los traduce al formato que Prometheus/Grafana esperan (§7 de la
+			arquitectura objetivo del audit).
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<dependency>
 			<groupId>com.auth0</groupId>
 			<artifactId>java-jwt</artifactId>

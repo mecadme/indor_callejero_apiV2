@@ -44,3 +44,16 @@ storage:
     # Etapa 10/Redis (o antes, si hace falta), una S3StorageService
     # reemplaza esta clase sin que TeamService ni FileController se enteren.
     base-path: ${STORAGE_BASE_PATH:./uploads}
+
+# PERF-09 del audit: sin Actuator, un incidente se diagnostica a ciegas.
+# Solo se exponen los tres endpoints que de verdad hacen falta -- no
+# "*" (todo), que expondría /env y /configprops con secretos incluidos.
+# Quién puede LEER cada uno se decide en SecurityConfig, no acá.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  endpoint:
+    health:
+      show-details: when-authorized

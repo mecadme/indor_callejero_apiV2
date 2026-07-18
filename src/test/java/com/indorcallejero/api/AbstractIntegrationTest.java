@@ -2,6 +2,7 @@ package com.indorcallejero.api;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -24,8 +25,15 @@ import org.testcontainers.containers.MySQLContainer;
  * bloque static por JVM, sin que el descubrimiento de @ServiceConnection
  * (todavía nuevo en Boot 4.1) decida si dos clases de test "son la misma
  * configuración" o no.
+ *
+ * @ActiveProfiles("test") activa application-test.yml como CAPA sobre el
+ * application.yml real -- no lo reemplaza (a diferencia de un
+ * application.yml homónimo en test/resources, el error que se encontró
+ * armando la Etapa 9: management.endpoints.web.exposure.include del
+ * archivo real no estaba llegando a ningún test).
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
 public abstract class AbstractIntegrationTest {
 

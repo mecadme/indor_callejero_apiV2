@@ -96,6 +96,19 @@ public final class SecurityConfig {
                         // solo la lectura.
                         .requestMatchers(HttpMethod.GET, "/api/files/**")
                         .permitAll()
+                        // Un load balancer/orquestador tiene que poder pegarle a
+                        // /health sin JWT -- es lo único de Actuator que es seguro
+                        // dejar público (con show-details=when-authorized, un
+                        // anónimo solo ve "UP"/"DOWN", no el detalle de cada
+                        // componente).
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**")
+                        .permitAll()
+                        // El resto de Actuator (métricas, prometheus) puede filtrar
+                        // información interna -- consultas SQL, uso de memoria,
+                        // conteo de requests por endpoint. Ni siquiera "authenticated()"
+                        // alcanza acá, hace falta ser ADMIN.
+                        .requestMatchers("/actuator/**")
+                        .hasRole("ADMIN")
                         // Cada dominio nuevo tiene que sumarse acá a mano -- es la
                         // fricción a propósito de SEC-03: si te olvidás, el dominio
                         // entero devuelve denyAll(), no queda público por accidente.

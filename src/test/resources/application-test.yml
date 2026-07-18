@@ -1,6 +1,17 @@
-# Config exclusiva de tests -- nunca lee el .env real ni activa un perfil
-# dev/prod. Los tests tienen que poder correr en cualquier máquina (o en
-# CI, Etapa 5) sin que nadie tenga que configurar nada a mano primero.
+# Perfil "test" (application-test.yml), no application.yml a secas -- a
+# propósito, encontrado en la Etapa 9. Un application.yml en test/resources
+# con ese nombre exacto NO se combina con el de main/resources: lo
+# REEMPLAZA por completo, porque ambos compiten por la misma ruta de
+# classpath ("application.yml") y solo uno gana. Eso significaba que
+# open-in-view=false, los límites de multipart y (recién lo notamos acá)
+# management.endpoints.web.exposure.include del application.yml real
+# nunca estuvieron activos en ningún test de este proyecto.
+#
+# Como archivo de PERFIL (application-{profile}.yml), en cambio, Spring
+# SÍ lo carga en capas sobre el application.yml base -- este archivo solo
+# necesita listar lo que es genuinamente distinto en tests (JWT de
+# prueba, storage en target/), todo lo demás lo hereda del real. Requiere
+# @ActiveProfiles("test") en AbstractIntegrationTest para activarse.
 #
 # spring.datasource.* NO aparece acá: lo completa AbstractIntegrationTest
 # en runtime vía @DynamicPropertySource, apuntando al contenedor MySQL

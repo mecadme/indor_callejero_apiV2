@@ -24,9 +24,9 @@ spring:
     # 20 acá no es un número mágico: es un punto de partida razonado, no
     # medido todavía. La única forma de afinarlo bien es mirando métricas
     # reales de saturación del pool (hikaricp.connections.pending > 0
-    # sostenido = subirlo; idle alto todo el tiempo = bajarlo) -- eso
-    # llega recién en la Etapa 9 con Actuator/Micrometer. Hasta entonces,
-    # esto es mejor que un default que nadie eligió a propósito.
+    # sostenido = subirlo; idle alto todo el tiempo = bajarlo) -- ahora
+    # que existe /actuator/metrics (Etapa 9), esa métrica ya se puede
+    # consultar de verdad en vez de adivinar.
     hikari:
       maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
       minimum-idle: ${DB_POOL_MIN_IDLE:5}
@@ -39,6 +39,14 @@ spring:
 logging:
   level:
     root: INFO
+  # PERF-09 del audit: texto plano ("2026-07-18 10:00:00 INFO ...") es
+  # cómodo de leer a mano, imposible de indexar bien en un sistema de logs
+  # centralizado (OpenSearch/ELK). ECS (Elastic Common Schema) es JSON con
+  # campos estándar -- soporte nativo de Spring Boot desde la 3.4, sin
+  # depender de logstash-logback-encoder ni configurar Logback a mano.
+  structured:
+    format:
+      console: ecs
 
 security:
   jwt:
