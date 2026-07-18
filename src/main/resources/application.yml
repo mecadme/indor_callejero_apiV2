@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: indor-callejero-api
+  jpa:
+    # Por defecto Spring Boot mantiene la sesión de Hibernate abierta durante
+    # el renderizado de la respuesta ("Open Session in View"). Es cómodo
+    # porque oculta errores de lazy-loading, pero también los oculta:
+    # mantiene una conexión de BD retenida más tiempo del necesario en cada
+    # request y es la puerta de entrada más común al problema N+1 (PERF-02
+    # del audit). Lo desactivamos ahora, antes de que exista una sola
+    # entidad, para que cada acceso a una relación LAZY sea una decisión
+    # explícita del service, no un accidente del framework.
+    open-in-view: false
+
+server:
+  port: ${PORT:8080}

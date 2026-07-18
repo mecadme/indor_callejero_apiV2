@@ -1,0 +1,26 @@
+# Perfil de PRODUCCIÓN. Se activa explícitamente:
+#   SPRING_PROFILES_ACTIVE=prod
+#
+# ddl-auto=validate: la app JAMÁS modifica el esquema en producción, solo
+# verifica que coincida con lo que las entidades esperan. Si no coincide,
+# falla el arranque en vez de alterar la BD en caliente (esto es lo que
+# SEC-07 del audit encontró mal configurado). El esquema real se gestiona
+# con migraciones versionadas — las incorporamos cuando aparezca la primera
+# entidad persistente, en la Etapa 1.
+#
+# Sin valores por defecto en las variables de entorno: si falta DB_URL,
+# DB_USER o DB_PASSWORD, el arranque debe fallar ruidosamente, no arrancar
+# con un default silencioso.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    root: INFO

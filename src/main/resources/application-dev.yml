@@ -1,0 +1,22 @@
+# Perfil de DESARROLLO. Se activa explícitamente (nunca por defecto):
+#   SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
+#
+# ddl-auto=update y show-sql=true son intencionales acá: priorizan iteración
+# rápida en tu máquina. Ver application-prod.yml para el motivo por el que
+# estos mismos valores están prohibidos en producción (SEC-07 del audit).
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/${DB_NAME:indor_callejero_dev}
+    username: root
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    com.indorcallejero: DEBUG
