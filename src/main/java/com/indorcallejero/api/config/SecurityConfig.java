@@ -1,6 +1,8 @@
 package com.indorcallejero.api.config;
 
 import com.indorcallejero.api.auth.JwtAuthenticationFilter;
+import com.indorcallejero.api.error.RestAccessDeniedHandler;
+import com.indorcallejero.api.error.RestAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,13 +42,19 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
     private final String allowedOrigins;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            RestAuthenticationEntryPoint restAuthenticationEntryPoint,
+            RestAccessDeniedHandler restAccessDeniedHandler,
             @Value("${security.cors.allowed-origins}") String allowedOrigins
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.restAuthenticationEntryPoint = restAuthenticationEntryPoint;
+        this.restAccessDeniedHandler = restAccessDeniedHandler;
         // SEC-12 del audit: origin comodín + allowCredentials(true) es una
         // combinación que el propio spec de CORS prohíbe -- lo rechazamos acá
         // en el arranque en vez de descubrirlo en producción.
@@ -78,6 +86,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/api/users/**")
                         .authenticated()
                         .anyRequest().denyAll()
+                )
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

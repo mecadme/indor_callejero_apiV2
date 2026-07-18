@@ -1,8 +1,10 @@
 package com.indorcallejero.api.user;
 
+import jakarta.validation.constraints.NotBlank;
+
 public record UpdateUserProfileRequest(
-        String firstName,
-        String lastName,
+        @NotBlank String firstName,
+        @NotBlank String lastName,
         String bio,
         String imageUrl
 ) {

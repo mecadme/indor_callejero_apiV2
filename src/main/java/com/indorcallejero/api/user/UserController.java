@@ -1,5 +1,6 @@
 package com.indorcallejero.api.user;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,7 +37,7 @@ public class UserController {
     // ¿podés tocar ESTE recurso?) y por eso viven en dos lugares distintos.
     @PreAuthorize("hasRole('ADMIN') or #id == principal.id()")
     @PatchMapping("/{id}")
-    public UserDTO updateProfile(@PathVariable Long id, @RequestBody UpdateUserProfileRequest request) {
+    public UserDTO updateProfile(@PathVariable Long id, @Valid @RequestBody UpdateUserProfileRequest request) {
         return userService.updateProfile(id, request);
     }
 }
