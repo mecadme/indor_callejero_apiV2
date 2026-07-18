@@ -8,6 +8,8 @@ public record MatchDTO(
         String homeTeamName,
         Long awayTeamId,
         String awayTeamName,
+        Long roundId,
+        String roundName,
         Instant scheduledAt,
         MatchStatus status,
         Integer goalsHomeTeam,

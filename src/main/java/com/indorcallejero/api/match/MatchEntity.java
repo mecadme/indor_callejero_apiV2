@@ -1,5 +1,6 @@
 package com.indorcallejero.api.match;
 
+import com.indorcallejero.api.round.RoundEntity;
 import com.indorcallejero.api.team.TeamEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,6 +37,15 @@ public class MatchEntity {
     @JoinColumn(name = "away_team_id", nullable = false)
     private TeamEntity awayTeam;
 
+    // Nullable a propósito: el calendario de las Etapas 6/7 ya tenía
+    // partidos cargados sin esta noción de "fecha/fase" (quedó afuera de
+    // esa etapa), y no hay una migración versionada todavía que pueda
+    // rellenar un valor real para esos partidos existentes. Un partido sin
+    // ronda asignada es un estado válido, no un dato faltante.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "round_id")
+    private RoundEntity round;
+
     @Column(nullable = false)
     private Instant scheduledAt;
 
@@ -58,6 +68,11 @@ public class MatchEntity {
         this.awayTeam = awayTeam;
         this.scheduledAt = scheduledAt;
         this.status = MatchStatus.SCHEDULED;
+    }
+
+    // null es una entrada válida -- "sacar de la ronda", no un error.
+    public void assignRound(RoundEntity round) {
+        this.round = round;
     }
 
     public void start() {
@@ -88,6 +103,10 @@ public class MatchEntity {
 
     public TeamEntity getAwayTeam() {
         return awayTeam;
+    }
+
+    public RoundEntity getRound() {
+        return round;
     }
 
     public Instant getScheduledAt() {

@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +44,12 @@ public class MatchController {
     @PostMapping("/{id}/start")
     public MatchDTO startMatch(@PathVariable Long id) {
         return matchService.startMatch(id);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PatchMapping("/{id}/round")
+    public MatchDTO assignRound(@PathVariable Long id, @RequestBody AssignRoundRequest request) {
+        return matchService.assignRound(id, request.roundId());
     }
 
     // El endpoint más caliente del sistema según el propio audit (§2, la

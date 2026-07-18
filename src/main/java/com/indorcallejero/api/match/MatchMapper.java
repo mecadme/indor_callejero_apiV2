@@ -10,5 +10,7 @@ public interface MatchMapper {
     @Mapping(source = "homeTeam.name", target = "homeTeamName")
     @Mapping(source = "awayTeam.id", target = "awayTeamId")
     @Mapping(source = "awayTeam.name", target = "awayTeamName")
+    @Mapping(source = "round.id", target = "roundId")
+    @Mapping(source = "round.name", target = "roundName")
     MatchDTO toDto(MatchEntity entity);
 }

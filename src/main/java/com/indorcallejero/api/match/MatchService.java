@@ -1,6 +1,9 @@
 package com.indorcallejero.api.match;
 
 import com.indorcallejero.api.config.RestPage;
+import com.indorcallejero.api.round.RoundEntity;
+import com.indorcallejero.api.round.RoundNotFoundException;
+import com.indorcallejero.api.round.RoundRepository;
 import com.indorcallejero.api.team.TeamEntity;
 import com.indorcallejero.api.team.TeamNotFoundException;
 import com.indorcallejero.api.team.TeamRepository;
@@ -29,17 +32,20 @@ public class MatchService {
 
     private final MatchRepository matchRepository;
     private final TeamRepository teamRepository;
+    private final RoundRepository roundRepository;
     private final MatchMapper matchMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     public MatchService(
             MatchRepository matchRepository,
             TeamRepository teamRepository,
+            RoundRepository roundRepository,
             MatchMapper matchMapper,
             ApplicationEventPublisher eventPublisher
     ) {
         this.matchRepository = matchRepository;
         this.teamRepository = teamRepository;
+        this.roundRepository = roundRepository;
         this.matchMapper = matchMapper;
         this.eventPublisher = eventPublisher;
     }
@@ -66,6 +72,19 @@ public class MatchService {
                 .orElseThrow(() -> new TeamNotFoundException(request.awayTeamId()));
 
         MatchEntity match = new MatchEntity(homeTeam, awayTeam, request.scheduledAt());
+        if (request.roundId() != null) {
+            match.assignRound(findRoundOrThrow(request.roundId()));
+        }
+        return matchMapper.toDto(matchRepository.save(match));
+    }
+
+    // roundId == null desasigna a propósito -- "sacá este partido de
+    // cualquier ronda" es un caso válido (el calendario sigue
+    // reorganizándose después de que existan partidos ya creados).
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
+    public MatchDTO assignRound(Long matchId, Long roundId) {
+        MatchEntity match = findOrThrow(matchId);
+        match.assignRound(roundId == null ? null : findRoundOrThrow(roundId));
         return matchMapper.toDto(matchRepository.save(match));
     }
 
@@ -94,5 +113,9 @@ public class MatchService {
 
     private MatchEntity findOrThrow(Long id) {
         return matchRepository.findById(id).orElseThrow(() -> new MatchNotFoundException(id));
+    }
+
+    private RoundEntity findRoundOrThrow(Long id) {
+        return roundRepository.findById(id).orElseThrow(() -> new RoundNotFoundException(id));
     }
 }

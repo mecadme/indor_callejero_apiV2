@@ -8,6 +8,10 @@ import java.time.Instant;
 public record CreateMatchRequest(
         @NotNull Long homeTeamId,
         @NotNull Long awayTeamId,
-        @NotNull @Future Instant scheduledAt
+        @NotNull @Future Instant scheduledAt,
+        // Opcional a propósito: un partido puede existir antes de que se
+        // sepa a qué fecha/fase pertenece -- ver PATCH /api/matches/{id}/round
+        // para asignarlo (o reasignarlo) después.
+        Long roundId
 ) {
 }

@@ -1,5 +1,8 @@
 package com.indorcallejero.api.match;
 
+import com.indorcallejero.api.round.RoundEntity;
+import com.indorcallejero.api.round.RoundNotFoundException;
+import com.indorcallejero.api.round.RoundRepository;
 import com.indorcallejero.api.team.TeamEntity;
 import com.indorcallejero.api.team.TeamGroup;
 import com.indorcallejero.api.team.TeamNotFoundException;
@@ -33,6 +36,9 @@ class MatchServiceTest {
     private TeamRepository teamRepository;
 
     @Mock
+    private RoundRepository roundRepository;
+
+    @Mock
     private MatchMapper matchMapper;
 
     @Mock
@@ -43,7 +49,7 @@ class MatchServiceTest {
 
     @Test
     void createMatch_lanzaTeamNotFoundException_siElEquipoLocalNoExiste() {
-        CreateMatchRequest request = new CreateMatchRequest(1L, 2L, Instant.now().plus(1, ChronoUnit.DAYS));
+        CreateMatchRequest request = new CreateMatchRequest(1L, 2L, Instant.now().plus(1, ChronoUnit.DAYS), null);
         when(teamRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> matchService.createMatch(request))
@@ -93,6 +99,67 @@ class MatchServiceTest {
         assertThat(event.awayTeamId()).isEqualTo(20L);
         assertThat(event.goalsHomeTeam()).isEqualTo(2);
         assertThat(event.goalsAwayTeam()).isEqualTo(1);
+    }
+
+    @Test
+    void createMatch_asignaLaRonda_cuandoSeIndicaRoundId() {
+        TeamEntity home = teamWithId(10L, "Los Tigres");
+        TeamEntity away = teamWithId(20L, "Los Leones");
+        RoundEntity round = new RoundEntity("Fecha 1", 1);
+        CreateMatchRequest request = new CreateMatchRequest(10L, 20L, Instant.now().plus(1, ChronoUnit.DAYS), 5L);
+        when(teamRepository.findById(10L)).thenReturn(Optional.of(home));
+        when(teamRepository.findById(20L)).thenReturn(Optional.of(away));
+        when(roundRepository.findById(5L)).thenReturn(Optional.of(round));
+        when(matchRepository.save(any(MatchEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        matchService.createMatch(request);
+
+        ArgumentCaptor<MatchEntity> captor = ArgumentCaptor.forClass(MatchEntity.class);
+        verify(matchRepository).save(captor.capture());
+        assertThat(captor.getValue().getRound()).isEqualTo(round);
+    }
+
+    @Test
+    void createMatch_lanzaRoundNotFoundException_siLaRondaNoExiste() {
+        TeamEntity home = teamWithId(10L, "Los Tigres");
+        TeamEntity away = teamWithId(20L, "Los Leones");
+        CreateMatchRequest request = new CreateMatchRequest(10L, 20L, Instant.now().plus(1, ChronoUnit.DAYS), 404L);
+        when(teamRepository.findById(10L)).thenReturn(Optional.of(home));
+        when(teamRepository.findById(20L)).thenReturn(Optional.of(away));
+        when(roundRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> matchService.createMatch(request))
+                .isInstanceOf(RoundNotFoundException.class);
+    }
+
+    @Test
+    void assignRound_asignaLaRondaAUnPartidoExistente() {
+        TeamEntity home = teamWithId(10L, "Los Tigres");
+        TeamEntity away = teamWithId(20L, "Los Leones");
+        MatchEntity match = new MatchEntity(home, away, Instant.now().plus(1, ChronoUnit.DAYS));
+        RoundEntity round = new RoundEntity("Fecha 1", 1);
+        when(matchRepository.findById(1L)).thenReturn(Optional.of(match));
+        when(roundRepository.findById(5L)).thenReturn(Optional.of(round));
+        when(matchRepository.save(match)).thenReturn(match);
+
+        matchService.assignRound(1L, 5L);
+
+        assertThat(match.getRound()).isEqualTo(round);
+    }
+
+    @Test
+    void assignRound_desasignaLaRonda_cuandoRoundIdEsNull() {
+        TeamEntity home = teamWithId(10L, "Los Tigres");
+        TeamEntity away = teamWithId(20L, "Los Leones");
+        MatchEntity match = new MatchEntity(home, away, Instant.now().plus(1, ChronoUnit.DAYS));
+        match.assignRound(new RoundEntity("Fecha 1", 1));
+        when(matchRepository.findById(1L)).thenReturn(Optional.of(match));
+        when(matchRepository.save(match)).thenReturn(match);
+
+        matchService.assignRound(1L, null);
+
+        assertThat(match.getRound()).isNull();
+        verify(roundRepository, never()).findById(any());
     }
 
     // Refleja un ID en un TeamEntity recién creado (normalmente lo pone
