@@ -86,17 +86,15 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-testcontainers</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<version>${testcontainers.version}</version>
-			<scope>test</scope>
-		</dependency>
+		<!--
+			Sin spring-boot-testcontainers ni org.testcontainers:junit-jupiter:
+			proveían @ServiceConnection y @Testcontainers/@Container, que
+			dejamos de usar (ver AbstractIntegrationTest: ese mecanismo no
+			reusaba el contenedor entre clases de test como prometía). Una
+			dependencia sin uso real es superficie de CVE gratis, mismo
+			criterio que SEC-10 del audit (jjwt colgado sin que nadie lo
+			llamara).
+		-->
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>mysql</artifactId>

@@ -2,14 +2,20 @@
 # dev/prod. Los tests tienen que poder correr en cualquier máquina (o en
 # CI, Etapa 5) sin que nadie tenga que configurar nada a mano primero.
 #
-# spring.datasource.* NO aparece acá: lo completa Testcontainers en
-# runtime vía @ServiceConnection, apuntando al contenedor MySQL efímero
-# que arranca cada corrida de tests (ver AbstractIntegrationTest).
+# spring.datasource.* NO aparece acá: lo completa AbstractIntegrationTest
+# en runtime vía @DynamicPropertySource, apuntando al contenedor MySQL
+# efímero que arranca una sola vez por corrida de tests.
 spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+    properties:
+      hibernate:
+        # Habilita Statistics para que los tests puedan afirmar "esto NO
+        # dispara N+1" contando queries de verdad (getPrepareStatementCount),
+        # no confiando en que alguien mire el log a mano como en la Etapa 6.
+        generate_statistics: true
 
 security:
   jwt:
