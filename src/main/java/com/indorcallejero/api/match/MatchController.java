@@ -52,6 +52,12 @@ public class MatchController {
         return matchService.assignRound(id, request.roundId());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PatchMapping("/{id}/referee")
+    public MatchDTO assignReferee(@PathVariable Long id, @RequestBody AssignRefereeRequest request) {
+        return matchService.assignReferee(id, request.refereeId());
+    }
+
     // El endpoint más caliente del sistema según el propio audit (§2, la
     // cadena de saturación bajo carga concurrente se traza justo sobre esta
     // ruta) -- responde apenas guarda el resultado, sin esperar el

@@ -12,6 +12,9 @@ public record CreateMatchRequest(
         // Opcional a propósito: un partido puede existir antes de que se
         // sepa a qué fecha/fase pertenece -- ver PATCH /api/matches/{id}/round
         // para asignarlo (o reasignarlo) después.
-        Long roundId
+        Long roundId,
+        // Mismo criterio: el árbitro se puede designar después, ver
+        // PATCH /api/matches/{id}/referee.
+        Long refereeId
 ) {
 }

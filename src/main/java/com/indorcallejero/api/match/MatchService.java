@@ -1,6 +1,9 @@
 package com.indorcallejero.api.match;
 
 import com.indorcallejero.api.config.RestPage;
+import com.indorcallejero.api.referee.RefereeEntity;
+import com.indorcallejero.api.referee.RefereeNotFoundException;
+import com.indorcallejero.api.referee.RefereeRepository;
 import com.indorcallejero.api.round.RoundEntity;
 import com.indorcallejero.api.round.RoundNotFoundException;
 import com.indorcallejero.api.round.RoundRepository;
@@ -33,6 +36,7 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final TeamRepository teamRepository;
     private final RoundRepository roundRepository;
+    private final RefereeRepository refereeRepository;
     private final MatchMapper matchMapper;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -40,12 +44,14 @@ public class MatchService {
             MatchRepository matchRepository,
             TeamRepository teamRepository,
             RoundRepository roundRepository,
+            RefereeRepository refereeRepository,
             MatchMapper matchMapper,
             ApplicationEventPublisher eventPublisher
     ) {
         this.matchRepository = matchRepository;
         this.teamRepository = teamRepository;
         this.roundRepository = roundRepository;
+        this.refereeRepository = refereeRepository;
         this.matchMapper = matchMapper;
         this.eventPublisher = eventPublisher;
     }
@@ -75,6 +81,9 @@ public class MatchService {
         if (request.roundId() != null) {
             match.assignRound(findRoundOrThrow(request.roundId()));
         }
+        if (request.refereeId() != null) {
+            match.assignReferee(findRefereeOrThrow(request.refereeId()));
+        }
         return matchMapper.toDto(matchRepository.save(match));
     }
 
@@ -85,6 +94,14 @@ public class MatchService {
     public MatchDTO assignRound(Long matchId, Long roundId) {
         MatchEntity match = findOrThrow(matchId);
         match.assignRound(roundId == null ? null : findRoundOrThrow(roundId));
+        return matchMapper.toDto(matchRepository.save(match));
+    }
+
+    // Mismo criterio que assignRound: refereeId == null desasigna.
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
+    public MatchDTO assignReferee(Long matchId, Long refereeId) {
+        MatchEntity match = findOrThrow(matchId);
+        match.assignReferee(refereeId == null ? null : findRefereeOrThrow(refereeId));
         return matchMapper.toDto(matchRepository.save(match));
     }
 
@@ -117,5 +134,9 @@ public class MatchService {
 
     private RoundEntity findRoundOrThrow(Long id) {
         return roundRepository.findById(id).orElseThrow(() -> new RoundNotFoundException(id));
+    }
+
+    private RefereeEntity findRefereeOrThrow(Long id) {
+        return refereeRepository.findById(id).orElseThrow(() -> new RefereeNotFoundException(id));
     }
 }

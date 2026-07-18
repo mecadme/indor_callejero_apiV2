@@ -1,5 +1,8 @@
 package com.indorcallejero.api.match;
 
+import com.indorcallejero.api.referee.RefereeEntity;
+import com.indorcallejero.api.referee.RefereeNotFoundException;
+import com.indorcallejero.api.referee.RefereeRepository;
 import com.indorcallejero.api.round.RoundEntity;
 import com.indorcallejero.api.round.RoundNotFoundException;
 import com.indorcallejero.api.round.RoundRepository;
@@ -39,6 +42,9 @@ class MatchServiceTest {
     private RoundRepository roundRepository;
 
     @Mock
+    private RefereeRepository refereeRepository;
+
+    @Mock
     private MatchMapper matchMapper;
 
     @Mock
@@ -49,7 +55,7 @@ class MatchServiceTest {
 
     @Test
     void createMatch_lanzaTeamNotFoundException_siElEquipoLocalNoExiste() {
-        CreateMatchRequest request = new CreateMatchRequest(1L, 2L, Instant.now().plus(1, ChronoUnit.DAYS), null);
+        CreateMatchRequest request = new CreateMatchRequest(1L, 2L, Instant.now().plus(1, ChronoUnit.DAYS), null, null);
         when(teamRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> matchService.createMatch(request))
@@ -106,7 +112,7 @@ class MatchServiceTest {
         TeamEntity home = teamWithId(10L, "Los Tigres");
         TeamEntity away = teamWithId(20L, "Los Leones");
         RoundEntity round = new RoundEntity("Fecha 1", 1);
-        CreateMatchRequest request = new CreateMatchRequest(10L, 20L, Instant.now().plus(1, ChronoUnit.DAYS), 5L);
+        CreateMatchRequest request = new CreateMatchRequest(10L, 20L, Instant.now().plus(1, ChronoUnit.DAYS), 5L, null);
         when(teamRepository.findById(10L)).thenReturn(Optional.of(home));
         when(teamRepository.findById(20L)).thenReturn(Optional.of(away));
         when(roundRepository.findById(5L)).thenReturn(Optional.of(round));
@@ -120,10 +126,28 @@ class MatchServiceTest {
     }
 
     @Test
+    void createMatch_asignaElArbitro_cuandoSeIndicaRefereeId() {
+        TeamEntity home = teamWithId(10L, "Los Tigres");
+        TeamEntity away = teamWithId(20L, "Los Leones");
+        RefereeEntity referee = new RefereeEntity("Juan", "Pérez", "LIC-1");
+        CreateMatchRequest request = new CreateMatchRequest(10L, 20L, Instant.now().plus(1, ChronoUnit.DAYS), null, 7L);
+        when(teamRepository.findById(10L)).thenReturn(Optional.of(home));
+        when(teamRepository.findById(20L)).thenReturn(Optional.of(away));
+        when(refereeRepository.findById(7L)).thenReturn(Optional.of(referee));
+        when(matchRepository.save(any(MatchEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        matchService.createMatch(request);
+
+        ArgumentCaptor<MatchEntity> captor = ArgumentCaptor.forClass(MatchEntity.class);
+        verify(matchRepository).save(captor.capture());
+        assertThat(captor.getValue().getReferee()).isEqualTo(referee);
+    }
+
+    @Test
     void createMatch_lanzaRoundNotFoundException_siLaRondaNoExiste() {
         TeamEntity home = teamWithId(10L, "Los Tigres");
         TeamEntity away = teamWithId(20L, "Los Leones");
-        CreateMatchRequest request = new CreateMatchRequest(10L, 20L, Instant.now().plus(1, ChronoUnit.DAYS), 404L);
+        CreateMatchRequest request = new CreateMatchRequest(10L, 20L, Instant.now().plus(1, ChronoUnit.DAYS), 404L, null);
         when(teamRepository.findById(10L)).thenReturn(Optional.of(home));
         when(teamRepository.findById(20L)).thenReturn(Optional.of(away));
         when(roundRepository.findById(404L)).thenReturn(Optional.empty());
@@ -160,6 +184,48 @@ class MatchServiceTest {
 
         assertThat(match.getRound()).isNull();
         verify(roundRepository, never()).findById(any());
+    }
+
+    @Test
+    void assignReferee_asignaElArbitroAUnPartidoExistente() {
+        TeamEntity home = teamWithId(10L, "Los Tigres");
+        TeamEntity away = teamWithId(20L, "Los Leones");
+        MatchEntity match = new MatchEntity(home, away, Instant.now().plus(1, ChronoUnit.DAYS));
+        RefereeEntity referee = new RefereeEntity("Juan", "Pérez", "LIC-1");
+        when(matchRepository.findById(1L)).thenReturn(Optional.of(match));
+        when(refereeRepository.findById(7L)).thenReturn(Optional.of(referee));
+        when(matchRepository.save(match)).thenReturn(match);
+
+        matchService.assignReferee(1L, 7L);
+
+        assertThat(match.getReferee()).isEqualTo(referee);
+    }
+
+    @Test
+    void assignReferee_desasignaElArbitro_cuandoRefereeIdEsNull() {
+        TeamEntity home = teamWithId(10L, "Los Tigres");
+        TeamEntity away = teamWithId(20L, "Los Leones");
+        MatchEntity match = new MatchEntity(home, away, Instant.now().plus(1, ChronoUnit.DAYS));
+        match.assignReferee(new RefereeEntity("Juan", "Pérez", "LIC-1"));
+        when(matchRepository.findById(1L)).thenReturn(Optional.of(match));
+        when(matchRepository.save(match)).thenReturn(match);
+
+        matchService.assignReferee(1L, null);
+
+        assertThat(match.getReferee()).isNull();
+        verify(refereeRepository, never()).findById(any());
+    }
+
+    @Test
+    void assignReferee_lanzaRefereeNotFoundException_siElArbitroNoExiste() {
+        TeamEntity home = teamWithId(10L, "Los Tigres");
+        TeamEntity away = teamWithId(20L, "Los Leones");
+        MatchEntity match = new MatchEntity(home, away, Instant.now().plus(1, ChronoUnit.DAYS));
+        when(matchRepository.findById(1L)).thenReturn(Optional.of(match));
+        when(refereeRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> matchService.assignReferee(1L, 404L))
+                .isInstanceOf(RefereeNotFoundException.class);
     }
 
     // Refleja un ID en un TeamEntity recién creado (normalmente lo pone

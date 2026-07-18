@@ -1,5 +1,6 @@
 package com.indorcallejero.api.match;
 
+import com.indorcallejero.api.referee.RefereeEntity;
 import com.indorcallejero.api.round.RoundEntity;
 import com.indorcallejero.api.team.TeamEntity;
 import jakarta.persistence.Column;
@@ -46,6 +47,12 @@ public class MatchEntity {
     @JoinColumn(name = "round_id")
     private RoundEntity round;
 
+    // Mismo criterio que round: nullable, un partido puede no tener
+    // árbitro asignado todavía.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "referee_id")
+    private RefereeEntity referee;
+
     @Column(nullable = false)
     private Instant scheduledAt;
 
@@ -73,6 +80,10 @@ public class MatchEntity {
     // null es una entrada válida -- "sacar de la ronda", no un error.
     public void assignRound(RoundEntity round) {
         this.round = round;
+    }
+
+    public void assignReferee(RefereeEntity referee) {
+        this.referee = referee;
     }
 
     public void start() {
@@ -107,6 +118,10 @@ public class MatchEntity {
 
     public RoundEntity getRound() {
         return round;
+    }
+
+    public RefereeEntity getReferee() {
+        return referee;
     }
 
     public Instant getScheduledAt() {
