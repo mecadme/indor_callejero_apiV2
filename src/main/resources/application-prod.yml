@@ -24,3 +24,13 @@ spring:
 logging:
   level:
     root: INFO
+
+# springdoc los deja habilitados por defecto (avisa esto mismo en el log de
+# arranque). Mismo criterio default-deny que el resto de este archivo: nada
+# queda expuesto en prod sin una decisión explícita. Los reactivamos cuando
+# la Etapa 2 les ponga autenticación delante.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
