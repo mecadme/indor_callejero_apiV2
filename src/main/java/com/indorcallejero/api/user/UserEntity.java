@@ -77,6 +77,13 @@ public class UserEntity {
         this.roles.add(role);
     }
 
+    // Idempotente a propósito, como grantRole: otorgar un rol que ya tenés
+    // o sacar uno que ya no tenés no es un error, es un no-op -- el estado
+    // final que el caller quería ya es el que hay.
+    public void revokeRole(Role role) {
+        this.roles.remove(role);
+    }
+
     public Set<Role> getRoles() {
         return Collections.unmodifiableSet(roles);
     }
