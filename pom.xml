@@ -65,6 +65,20 @@
 			<artifactId>micrometer-registry-prometheus</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!--
+			SEC-04/PERF-04 del audit: la blacklist de JWT y el caché de lectura
+			dejan de vivir dentro del proceso de una sola instancia. spring-boot-
+			starter-cache trae la abstracción @Cacheable/@CacheEvict; spring-boot-
+			starter-data-redis trae el cliente (Lettuce) que la respalda.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.auth0</groupId>
 			<artifactId>java-jwt</artifactId>
@@ -129,6 +143,18 @@
 			<groupId>org.testcontainers</groupId>
 			<artifactId>mysql</artifactId>
 			<version>${testcontainers.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!--
+			Módulo oficial de Redis (com.redis, no org.testcontainers): igual
+			que con MySQL, un Redis real en Docker para los tests, no un fake
+			en memoria que no reproduce comportamiento real (TTL, atomicidad
+			de INCR).
+		-->
+		<dependency>
+			<groupId>com.redis</groupId>
+			<artifactId>testcontainers-redis</artifactId>
+			<version>2.2.4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

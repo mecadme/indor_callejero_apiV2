@@ -1,5 +1,6 @@
 package com.indorcallejero.api;
 
+import com.redis.testcontainers.RedisContainer;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -7,6 +8,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * Base para tests de integración: levanta un MySQL real en Docker, no H2.
@@ -39,14 +41,22 @@ public abstract class AbstractIntegrationTest {
 
     static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.4");
 
+    // Redis real en Docker acá también, no un fake en memoria -- un fake no
+    // reproduce el TTL nativo (RedisTokenBlacklist) ni la atomicidad de
+    // INCR (RedisRateLimiter), que son justo lo que estas clases explotan.
+    static final RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:8-alpine"));
+
     static {
         mysql.start();
+        redis.start();
     }
 
     @DynamicPropertySource
-    static void mysqlProperties(DynamicPropertyRegistry registry) {
+    static void containerProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", mysql::getJdbcUrl);
         registry.add("spring.datasource.username", mysql::getUsername);
         registry.add("spring.datasource.password", mysql::getPassword);
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", redis::getFirstMappedPort);
     }
 }

@@ -101,7 +101,7 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Usuario inválido"));
         UserPrincipal principal = new UserPrincipal(user);
 
-        tokenBlacklist.blacklist(decoded.getId());
+        tokenBlacklist.blacklist(decoded.getId(), decoded.getExpiresAt().toInstant());
 
         return new LoginResult(
                 new AuthResponse(user.getId(), user.getUsername(), jwtService.createAccessToken(principal)),
@@ -110,7 +110,7 @@ public class AuthService {
 
     public void logout(String accessToken) {
         DecodedJWT decoded = jwtService.validate(accessToken);
-        tokenBlacklist.blacklist(decoded.getId());
+        tokenBlacklist.blacklist(decoded.getId(), decoded.getExpiresAt().toInstant());
     }
 
     public void changePassword(Long userId, ChangePasswordRequest request) {

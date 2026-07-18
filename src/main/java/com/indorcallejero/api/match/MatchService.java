@@ -1,8 +1,11 @@
 package com.indorcallejero.api.match;
 
+import com.indorcallejero.api.config.RestPage;
 import com.indorcallejero.api.team.TeamEntity;
 import com.indorcallejero.api.team.TeamNotFoundException;
 import com.indorcallejero.api.team.TeamRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class MatchService {
 
+    private static final String CACHE_NAME = "matches";
+
     private final MatchRepository matchRepository;
     private final TeamRepository teamRepository;
     private final MatchMapper matchMapper;
@@ -39,9 +44,13 @@ public class MatchService {
         this.eventPublisher = eventPublisher;
     }
 
+    // "Calendario": la vista pública de partidos que casi nunca cambia
+    // entre dos requests pero se consulta seguido -- el ejemplo de lectura
+    // caliente que PERF-04 del audit pide cachear.
+    @Cacheable(CACHE_NAME)
     @Transactional(readOnly = true)
     public Page<MatchDTO> getMatches(Pageable pageable) {
-        return matchRepository.findAll(pageable).map(matchMapper::toDto);
+        return new RestPage<>(matchRepository.findAll(pageable).map(matchMapper::toDto));
     }
 
     @Transactional(readOnly = true)
@@ -49,6 +58,7 @@ public class MatchService {
         return matchMapper.toDto(findOrThrow(id));
     }
 
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
     public MatchDTO createMatch(CreateMatchRequest request) {
         TeamEntity homeTeam = teamRepository.findById(request.homeTeamId())
                 .orElseThrow(() -> new TeamNotFoundException(request.homeTeamId()));
@@ -59,12 +69,14 @@ public class MatchService {
         return matchMapper.toDto(matchRepository.save(match));
     }
 
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
     public MatchDTO startMatch(Long id) {
         MatchEntity match = findOrThrow(id);
         match.start();
         return matchMapper.toDto(matchRepository.save(match));
     }
 
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
     public MatchDTO recordResult(Long id, RecordResultRequest request) {
         MatchEntity match = findOrThrow(id);
         match.recordResult(request.goalsHomeTeam(), request.goalsAwayTeam());

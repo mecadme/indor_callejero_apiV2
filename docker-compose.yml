@@ -16,5 +16,20 @@ services:
       timeout: 5s
       retries: 10
 
+  # Etapa 10: donde antes vivía en el proceso de la app (blacklist de JWT
+  # en un HashSet, rate limiter en un Map) ahora vive acá -- compartido
+  # entre instancias, sobrevive a un restart de la app.
+  redis:
+    image: redis:8-alpine
+    container_name: indor-callejero-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   mysql_data:

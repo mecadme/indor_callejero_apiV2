@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Date;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -128,13 +129,19 @@ class AuthServiceTest {
     }
 
     @Test
-    void logout_deslistaElJtiDelAccessToken() {
+    void logout_deslistaElJtiDelAccessToken_conSuFechaDeExpiracionReal() {
+        // Date solo tiene precisión de milisegundos -- arrancar de un Date
+        // (no de Instant.now(), que puede tener nanosegundos) evita un
+        // falso negativo por precisión al ida-y-vuelta Date->Instant que
+        // hace AuthService.logout() internamente.
+        Date expiresAtDate = new Date(System.currentTimeMillis() + 900_000);
         DecodedJWT decoded = org.mockito.Mockito.mock(DecodedJWT.class);
         when(decoded.getId()).thenReturn("jti-123");
+        when(decoded.getExpiresAt()).thenReturn(expiresAtDate);
         when(jwtService.validate(anyString())).thenReturn(decoded);
 
         authService.logout("access-token");
 
-        verify(tokenBlacklist).blacklist("jti-123");
+        verify(tokenBlacklist).blacklist("jti-123", expiresAtDate.toInstant());
     }
 }

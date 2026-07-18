@@ -74,6 +74,14 @@
         <Class name="com.indorcallejero.api.error.RestAuthenticationEntryPoint"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Class name="com.indorcallejero.api.auth.RedisTokenBlacklist"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.indorcallejero.api.auth.RedisRateLimiter"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 
     <!--
       Cualquier *Entity: las relaciones @ManyToOne/@OneToOne (ej.

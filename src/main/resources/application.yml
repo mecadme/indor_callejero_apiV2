@@ -19,6 +19,18 @@ spring:
     # entidad, para que cada acceso a una relación LAZY sea una decisión
     # explícita del service, no un accidente del framework.
     open-in-view: false
+  # SEC-04/PERF-04 del audit: blacklist de JWT y caché de standings/calendario
+  # viven acá ahora, no en memoria de una sola instancia.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  # type: redis alcanza para que Spring Boot arme un RedisCacheManager --
+  # el TTL y el serializador JSON se configuran en código
+  # (CacheConfig.cacheConfiguration()), no acá, para que haya un solo
+  # lugar que decida esto y no dos que puedan desincronizarse.
+  cache:
+    type: redis
 
 server:
   port: ${PORT:8080}
