@@ -1,5 +1,6 @@
 package com.indorcallejero.api.team;
 
+import com.indorcallejero.api.storage.StorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,12 +10,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +31,9 @@ class TeamServiceTest {
 
     @Mock
     private TeamMapper teamMapper;
+
+    @Mock
+    private StorageService storageService;
 
     @InjectMocks
     private TeamService teamService;
@@ -77,6 +84,32 @@ class TeamServiceTest {
         assertThat(entity.getColor()).isEqualTo("Azul");
         assertThat(entity.getNeighborhood()).isEqualTo("Norte");
         assertThat(entity.getGroup()).isEqualTo(TeamGroup.B2);
+    }
+
+    @Test
+    void updateLogo_guardaElArchivoYActualizaLogoUrl() {
+        TeamEntity entity = new TeamEntity("Los Tigres", "Naranja", "Centro", TeamGroup.A1);
+        MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", new byte[]{1, 2, 3});
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(entity));
+        when(storageService.store(eq(file), eq("teams"))).thenReturn("teams/abc123.png");
+        when(teamRepository.save(entity)).thenReturn(entity);
+        when(teamMapper.toDto(entity)).thenReturn(
+                new TeamDTO(1L, "Los Tigres", "Naranja", "Centro", "/api/files/teams/abc123.png", TeamGroup.A1));
+
+        teamService.updateLogo(1L, file);
+
+        assertThat(entity.getLogoUrl()).isEqualTo("/api/files/teams/abc123.png");
+    }
+
+    @Test
+    void updateLogo_lanzaTeamNotFoundException_sinTocarElStorage_cuandoNoExiste() {
+        when(teamRepository.findById(999L)).thenReturn(Optional.empty());
+        MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", new byte[]{1});
+
+        assertThatThrownBy(() -> teamService.updateLogo(999L, file))
+                .isInstanceOf(TeamNotFoundException.class);
+
+        verify(storageService, never()).store(any(), any());
     }
 
     @Test

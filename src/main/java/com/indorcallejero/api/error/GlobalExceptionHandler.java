@@ -2,6 +2,7 @@ package com.indorcallejero.api.error;
 
 import com.indorcallejero.api.auth.TooManyAttemptsException;
 import com.indorcallejero.api.match.InvalidMatchStateException;
+import com.indorcallejero.api.storage.InvalidFileException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
 
@@ -75,6 +77,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidMatchStateException.class)
     public ResponseEntity<ErrorResponse> handleInvalidMatchState(InvalidMatchStateException ex, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+    // SEC-09 del audit: archivo vacío, tipo no permitido (por contenido real,
+    // no por extensión) o clave inválida al leerlo.
+    @ExceptionHandler(InvalidFileException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidFile(InvalidFileException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    // Spring rechaza esto ANTES de que nuestro propio FileContentValidator
+    // corra -- spring.servlet.multipart.max-file-size es el primer filtro,
+    // el nuestro (con el mensaje "detectado por contenido") es el segundo.
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(HttpServletRequest request) {
+        return build(HttpStatus.PAYLOAD_TOO_LARGE, "El archivo supera el tamaño máximo permitido", request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

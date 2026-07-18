@@ -29,3 +29,9 @@ security:
   rate-limit:
     max-attempts: 5
     window-seconds: 60
+
+storage:
+  local:
+    # Dentro de target/, no del ./uploads real de dev -- mvn clean lo
+    # limpia solo, y target/ ya está en .gitignore.
+    base-path: ./target/test-uploads

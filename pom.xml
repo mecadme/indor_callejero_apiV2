@@ -64,6 +64,20 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>3.0.3</version>
 		</dependency>
+		<!--
+			SEC-09 del audit: el original tomaba la extensión del nombre de
+			archivo que manda el cliente, verbatim, sin mirar el contenido real.
+			tika-core detecta el tipo real leyendo los magic bytes del archivo
+			(las primeras bytes que identifican el formato real, sin importar
+			qué extensión o Content-Type declare el cliente); solo el módulo
+			"core", no tika-parsers completo, que traería decenas de parsers de
+			formato que no necesitamos para esto.
+		-->
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>3.3.1</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

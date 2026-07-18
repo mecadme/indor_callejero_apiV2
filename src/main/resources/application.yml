@@ -1,6 +1,14 @@
 spring:
   application:
     name: indor-callejero-api
+  servlet:
+    multipart:
+      # Alineado al límite real de FileContentValidator (5MB) -- el default
+      # de Spring Boot es 1MB. Sin este ajuste, un archivo de 3MB que
+      # nuestro propio validador aceptaría rebota antes, con un error de
+      # Spring que no dice nada sobre el límite real de la app.
+      max-file-size: 5MB
+      max-request-size: 6MB
   jpa:
     # Por defecto Spring Boot mantiene la sesión de Hibernate abierta durante
     # el renderizado de la respuesta ("Open Session in View"). Es cómodo
@@ -27,3 +35,12 @@ security:
   rate-limit:
     max-attempts: ${RATE_LIMIT_MAX_ATTEMPTS:5}
     window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}
+
+storage:
+  local:
+    # PERF-05 del audit sigue sin resolverse del todo acá a propósito: esto
+    # sigue siendo disco local, incompatible con más de una instancia. Lo
+    # que cambia es que StorageService es una interfaz -- el día de la
+    # Etapa 10/Redis (o antes, si hace falta), una S3StorageService
+    # reemplaza esta clase sin que TeamService ni FileController se enteren.
+    base-path: ${STORAGE_BASE_PATH:./uploads}

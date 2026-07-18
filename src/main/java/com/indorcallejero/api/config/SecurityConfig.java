@@ -90,6 +90,12 @@ public final class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                         .permitAll()
+                        // Logos/fotos servidos son contenido público (marketing), no
+                        // datos sensibles -- lo que sube un archivo sigue siendo
+                        // authenticated() + @PreAuthorize(ADMIN) más abajo, esto es
+                        // solo la lectura.
+                        .requestMatchers(HttpMethod.GET, "/api/files/**")
+                        .permitAll()
                         // Cada dominio nuevo tiene que sumarse acá a mano -- es la
                         // fricción a propósito de SEC-03: si te olvidás, el dominio
                         // entero devuelve denyAll(), no queda público por accidente.

@@ -38,3 +38,6 @@ build/
 
 ### Secrets / entorno local ###
 .env
+
+### Archivos subidos en dev (StorageService local, Etapa 8) ###
+/uploads/

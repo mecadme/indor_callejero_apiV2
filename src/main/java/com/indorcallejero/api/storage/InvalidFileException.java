@@ -1,0 +1,8 @@
+package com.indorcallejero.api.storage;
+
+public class InvalidFileException extends RuntimeException {
+
+    public InvalidFileException(String message) {
+        super(message);
+    }
+}
