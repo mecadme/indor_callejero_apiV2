@@ -25,10 +25,19 @@ logging:
   level:
     root: INFO
 
+security:
+  jwt:
+    cookie-secure: true
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS}
+
 # springdoc los deja habilitados por defecto (avisa esto mismo en el log de
-# arranque). Mismo criterio default-deny que el resto de este archivo: nada
-# queda expuesto en prod sin una decisión explícita. Los reactivamos cuando
-# la Etapa 2 les ponga autenticación delante.
+# arranque). Decisión definitiva, no un pendiente: aunque la Etapa 2 ya
+# asegura el resto de la API, /v3/api-docs sigue siendo un mapa completo de
+# la superficie de ataque -- útil para vos, también para quien esté
+# reconociendo el sistema desde afuera. Si en el futuro hace falta exponerlo
+# en prod, que sea detrás de una capa aparte (ingress interno, VPN), no de
+# la autenticación de la app.
 springdoc:
   api-docs:
     enabled: false

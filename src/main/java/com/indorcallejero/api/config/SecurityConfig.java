@@ -1,0 +1,113 @@
+package com.indorcallejero.api.config;
+
+import com.indorcallejero.api.auth.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * SEC-03 del audit: la versión original nunca llamaba a
+ * authorizeHttpRequests, así que cualquier endpoint sin @PreAuthorize
+ * quedaba público por accidente ("fail-open"). Acá se invierte: TODO
+ * requiere autenticación salvo lo que se permite a mano, y lo que no
+ * coincide con ninguna regla termina en denyAll() ("fail-closed"). Un
+ * desarrollador que agregue un controller nuevo y se olvide de esta clase
+ * obtiene un 403 al probarlo, no un endpoint abierto al mundo.
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final String allowedOrigins;
+
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            @Value("${security.cors.allowed-origins}") String allowedOrigins
+    ) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        // SEC-12 del audit: origin comodín + allowCredentials(true) es una
+        // combinación que el propio spec de CORS prohíbe -- lo rechazamos acá
+        // en el arranque en vez de descubrirlo en producción.
+        if (allowedOrigins.contains("*")) {
+            throw new IllegalStateException(
+                    "security.cors.allowed-origins no puede incluir '*' junto con credenciales habilitadas (SEC-12)");
+        }
+        this.allowedOrigins = allowedOrigins;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // /error también pasa por este filtro -- es un forward interno de
+                        // Spring Boot, no un endpoint nuestro. Sin esta línea, denyAll()
+                        // de más abajo intercepta ESE forward y cualquier 500 real (una
+                        // excepción sin manejar en el service, por ejemplo) sale como un
+                        // 403 que no tiene nada que ver con seguridad -- nos pasó de
+                        // verdad probando el rate limiter de esta misma etapa.
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/refresh")
+                        .permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                        .permitAll()
+                        .requestMatchers("/api/auth/**", "/api/users/**")
+                        .authenticated()
+                        .anyRequest().denyAll()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    private CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    // Spring Boot arma un DaoAuthenticationProvider solo a partir de estos
+    // dos beans (UserDetailsService + PasswordEncoder) cuando pedimos el
+    // AuthenticationManager acá -- no hace falta declarar el provider a mano.
+    @Bean
+    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return new ProviderManager(provider);
+    }
+}

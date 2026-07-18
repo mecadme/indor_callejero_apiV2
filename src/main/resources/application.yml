@@ -14,3 +14,16 @@ spring:
 
 server:
   port: ${PORT:8080}
+
+security:
+  jwt:
+    # Sin valor por defecto para el secret -- si falta JWT_SECRET, el
+    # arranque falla. Un secreto de firma con un default hardcodeado es
+    # peor que no tener JWT.
+    secret: ${JWT_SECRET}
+    issuer: ${JWT_ISSUER:indor-callejero-api}
+    access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION_MS:900000}     # 15 min
+    refresh-token-expiration-ms: ${JWT_REFRESH_TOKEN_EXPIRATION_MS:604800000} # 7 días
+  rate-limit:
+    max-attempts: ${RATE_LIMIT_MAX_ATTEMPTS:5}
+    window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}

@@ -20,3 +20,13 @@ spring:
 logging:
   level:
     com.indorcallejero: DEBUG
+
+security:
+  jwt:
+    # false en dev porque no hay TLS local -- una cookie "secure" no la
+    # manda ningún browser sobre http://localhost. En prod es true siempre.
+    cookie-secure: false
+  cors:
+    # Ajustá esto al puerto real de tu frontend local (Vite = 5173 por
+    # defecto, el valor que usaba el proyecto original).
+    allowed-origins: http://localhost:5173,http://localhost:3000
