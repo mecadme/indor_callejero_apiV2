@@ -31,5 +31,59 @@ services:
       timeout: 5s
       retries: 10
 
+  # Etapa 11: dos instancias de la misma imagen, mismo Dockerfile, sin
+  # nada que las distinga entre sí -- si hiciera falta que app1 y app2
+  # tuvieran configuración distinta para funcionar juntas, eso ya sería
+  # una señal de que quedó estado pegado a una instancia particular.
+  app1: &app
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME:-indor_callejero_dev}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET}
+      # Solo para poder pegarle a cada instancia por separado y confirmar
+      # cuál contestó -- nginx (abajo) es la puerta real, esto es para
+      # verificar la Etapa 11 a mano, no para que un cliente le pegue acá.
+    ports:
+      - "8081:8080"
+    volumes:
+      - uploads_data:/app/uploads
+
+  app2:
+    <<: *app
+    ports:
+      - "8082:8080"
+
+  # El balanceador: el cliente le pega a este puerto (80), nunca
+  # directo a app1/app2. Sin estado propio -- si nginx se cae, se
+  # reemplaza sin perder nada, la misma idea que ya aplicamos a la app.
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app1
+      - app2
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
 volumes:
   mysql_data:
+  # Etapa 11 hecha visible: los uploads (Etapa 8) siguen viviendo en disco,
+  # no en un storage compartido real -- este volumen nombrado es un
+  # parche que solo funciona porque app1/app2 corren en la MISMA máquina
+  # Docker. Un multi-AZ de verdad no tiene un filesystem compartido entre
+  # zonas: ahí este volumen dejaría de alcanzar y haría falta S3 (o
+  # equivalente), ya lo dejamos preparado en la interfaz StorageService
+  # desde la Etapa 8.
+  uploads_data:

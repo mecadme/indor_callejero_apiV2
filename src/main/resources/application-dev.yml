@@ -6,7 +6,12 @@
 # estos mismos valores están prohibidos en producción (SEC-07 del audit).
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/${DB_NAME:indor_callejero_dev}
+    # DB_HOST tiene default "localhost" para no romper `mvnw spring-boot:run`
+    # corriendo directo en la máquina del dev (Etapas 0-10) -- la Etapa 11
+    # lo pisa a "mysql" (el nombre del service en docker-compose) para las
+    # instancias que corren containerizadas, mismo mecanismo que ya usa
+    # REDIS_HOST en el application.yml base.
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/${DB_NAME:indor_callejero_dev}
     username: root
     password: ${DB_PASSWORD}
   jpa:
