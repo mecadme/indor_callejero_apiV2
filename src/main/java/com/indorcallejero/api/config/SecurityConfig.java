@@ -114,7 +114,8 @@ public final class SecurityConfig {
                         // entero devuelve denyAll(), no queda público por accidente.
                         .requestMatchers("/api/auth/**", "/api/users/**", "/api/teams/**", "/api/players/**",
                                 "/api/matches/**", "/api/standings/**", "/api/rounds/**", "/api/referees/**",
-                                "/api/ethics-officers/**", "/api/sponsors/**", "/api/information/**")
+                                "/api/ethics-officers/**", "/api/sponsors/**", "/api/information/**",
+                                "/api/facebook-videos/**")
                         .authenticated()
                         .anyRequest().denyAll()
                 )
