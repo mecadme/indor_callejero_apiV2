@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Cada exclusión de acá es una decisión, no un silenciador genérico. La
-  regla EI_EXPOSE_REP2 asume que guardar una referencia recibida por
-  constructor es peligroso porque el caller podría mutarla por atrás,
-  cierto para value objects, falso para beans de Spring inyectados por
-  constructor (nadie "muta" un @Component desde afuera de esa forma).
-  Antes de agregar una entrada nueva acá, preguntate si es genuinamente
-  el mismo caso o si es un bug real disfrazado de falso positivo.
+  Cada exclusión de acá es una decisión, no un silenciador genérico.
+  Antes de agregar una entrada nueva, preguntate si es genuinamente el
+  mismo caso que ya está documentado o si es un bug real disfrazado de
+  falso positivo. Y si una entrada puntual se repite dos o tres veces con
+  la misma explicación, es momento de generalizarla por convención de
+  nombre en vez de seguir listando clases (pasó con Controller/Service en
+  la Etapa 6, después de la Etapa 5).
 -->
 <FindBugsFilter>
 
@@ -39,8 +39,24 @@
     </Match>
 
     <!--
-      Beans de Spring inyectados por constructor, no referencias externas
-      mutables en el sentido que le preocupa a esta regla.
+      Cualquier *Controller o *Service del proyecto: son beans de Spring,
+      sus constructores reciben otros beans (repositories, otros
+      services, filtros): esa es la única forma de hacer inyección de
+      dependencias acá, no una referencia externa mutable en el sentido
+      que le preocupa a esta regla. Generalizado por convención de
+      nombre porque aparece con cada dominio nuevo (Etapa 1 ya tenía
+      UserController/UserService, la Etapa 6 sumó Team* y Player*, van a
+      seguir sumándose).
+    -->
+    <Match>
+        <Class name="~com\.indorcallejero\.api\..*(Controller|Service)"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!--
+      Un puñado fijo de infraestructura de seguridad/errores con el mismo
+      patrón de inyección por constructor, pero fuera de la convención
+      Controller/Service.
     -->
     <Match>
         <Class name="com.indorcallejero.api.config.SecurityConfig"/>
@@ -57,6 +73,23 @@
     <Match>
         <Class name="com.indorcallejero.api.error.RestAuthenticationEntryPoint"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!--
+      Cualquier *Entity: las relaciones @ManyToOne/@OneToOne (ej.
+      PlayerEntity.team) devuelven y reciben la entidad relacionada
+      directamente: así funciona JPA. No hay copia defensiva razonable:
+      copiar una entidad gestionada por Hibernate la desconecta del
+      contexto de persistencia y rompe el dirty-checking que hace que
+      guardar cambios funcione. Va a repetirse en cada relación
+      entidad-entidad nueva (Match-Team, Match-Player, etc.).
+    -->
+    <Match>
+        <Class name="~com\.indorcallejero\.api\..*Entity"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
     </Match>
 
 </FindBugsFilter>

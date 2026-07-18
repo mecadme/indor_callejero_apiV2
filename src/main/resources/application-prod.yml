@@ -16,6 +16,21 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+    # PERF-01 del audit: el default de Hikari es 10 conexiones, sin ajustar,
+    # en los tres perfiles del proyecto original -- bajo carga concurrente
+    # sobre una sola ruta caliente (ej. cargar el roster de un equipo), el
+    # pool se agota y todo lo demás espera en cola detrás de esas 10.
+    #
+    # 20 acá no es un número mágico: es un punto de partida razonado, no
+    # medido todavía. La única forma de afinarlo bien es mirando métricas
+    # reales de saturación del pool (hikaricp.connections.pending > 0
+    # sostenido = subirlo; idle alto todo el tiempo = bajarlo) -- eso
+    # llega recién en la Etapa 9 con Actuator/Micrometer. Hasta entonces,
+    # esto es mejor que un default que nadie eligió a propósito.
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      connection-timeout: 3000
   jpa:
     hibernate:
       ddl-auto: validate

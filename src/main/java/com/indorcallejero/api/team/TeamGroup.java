@@ -1,0 +1,9 @@
+package com.indorcallejero.api.team;
+
+// Estructura real del torneo (grupos A/B/C, 4-5 equipos cada uno), no un
+// detalle técnico -- se mantiene igual al proyecto original.
+public enum TeamGroup {
+    A1, A2, A3, A4, A5,
+    B1, B2, B3, B4, B5,
+    C1, C2, C3, C4
+}
