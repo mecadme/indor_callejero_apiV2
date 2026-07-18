@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cada exclusión de acá es una decisión, no un silenciador genérico. La
+  regla EI_EXPOSE_REP2 asume que guardar una referencia recibida por
+  constructor es peligroso porque el caller podría mutarla por atrás,
+  cierto para value objects, falso para beans de Spring inyectados por
+  constructor (nadie "muta" un @Component desde afuera de esa forma).
+  Antes de agregar una entrada nueva acá, preguntate si es genuinamente
+  el mismo caso o si es un bug real disfrazado de falso positivo.
+-->
+<FindBugsFilter>
+
+    <!--
+      AuthenticationManager.authenticate() está documentado para devolver
+      siempre un Authentication no-nulo o lanzar AuthenticationException,
+      nunca null. SpotBugs no puede leer ese contrato desde la interfaz,
+      solo ve un tipo de retorno sin @NonNull.
+    -->
+    <Match>
+        <Class name="com.indorcallejero.api.auth.AuthService"/>
+        <Method name="login"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+
+    <!--
+      UserPrincipal envuelve un UserEntity a propósito: es una vista viva
+      sobre la entidad gestionada por Hibernate, no un value object que
+      deba copiarse defensivamente (copiarlo rompería el propósito de la
+      clase). SE_BAD_FIELD: Serializable llega heredado de UserDetails,
+      pensado para sesiones HTTP con estado; esta app es 100% stateless
+      (JWT), este principal nunca se serializa de verdad.
+    -->
+    <Match>
+        <Class name="com.indorcallejero.api.auth.UserPrincipal"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="SE_BAD_FIELD"/>
+        </Or>
+    </Match>
+
+    <!--
+      Beans de Spring inyectados por constructor, no referencias externas
+      mutables en el sentido que le preocupa a esta regla.
+    -->
+    <Match>
+        <Class name="com.indorcallejero.api.config.SecurityConfig"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.indorcallejero.api.error.JsonErrorWriter"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.indorcallejero.api.error.RestAccessDeniedHandler"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.indorcallejero.api.error.RestAuthenticationEntryPoint"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+</FindBugsFilter>

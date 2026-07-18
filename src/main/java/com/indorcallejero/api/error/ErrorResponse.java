@@ -20,6 +20,15 @@ public record ErrorResponse(
         List<FieldErrorDetail> errors
 ) {
 
+    // Constructor compacto: copia defensiva e inmutable de la lista. Sin
+    // esto, quien llame a ErrorResponse.validation(...) con su propia
+    // List<FieldErrorDetail> podría seguir mutándola después de construido
+    // el record -- justo lo que un record debería impedir. Lo encontró
+    // SpotBugs (EI_EXPOSE_REP/EI_EXPOSE_REP2), no lectura manual.
+    public ErrorResponse {
+        errors = errors == null ? null : List.copyOf(errors);
+    }
+
     public static ErrorResponse of(HttpStatus status, String message, String path) {
         return new ErrorResponse(Instant.now(), status.value(), status.getReasonPhrase(), message, path, null);
     }

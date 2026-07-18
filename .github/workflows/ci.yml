@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # ubuntu-latest ya trae Docker corriendo -- Testcontainers (Etapa 4)
+      # levanta el MySQL real sin ningún setup extra acá.
+      # `verify` corre test + spotbugs:check (atado en pom.xml), no solo `test`:
+      # el mismo comando que corre un desarrollador en su máquina es el que
+      # decide si el build pasa, sin sorpresas "funciona local, falla en CI".
+      - name: Build, tests y análisis estático
+        run: ./mvnw --batch-mode verify

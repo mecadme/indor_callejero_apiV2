@@ -15,8 +15,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+// final: Algorithm.HMAC256(secret) puede lanzar en el constructor si el
+// secret es inválido. SpotBugs marca eso como CT_CONSTRUCTOR_THROW -- una
+// subclase maliciosa podría, en teoría, resucitar un objeto a medio
+// construir capturando esa excepción vía un finalizer. "final" cierra esa
+// puerta sin cambiar nada del comportamiento real.
 @Component
-public class JwtService {
+public final class JwtService {
 
     private static final String AUTHORITIES_CLAIM = "authorities";
     private static final String USER_ID_CLAIM = "userId";

@@ -30,6 +30,7 @@
 		<java.version>21</java.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<testcontainers.version>1.21.4</testcontainers.version>
+		<spotbugs.version>4.10.3.0</spotbugs.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -127,6 +128,28 @@
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
+			</plugin>
+			<plugin>
+				<!--
+					Atado a la fase `verify`, no a un paso aparte solo-CI: si
+					`./mvnw verify` es lo que corre CI, es lo que tiene que poder
+					correr cualquiera en su máquina antes de hacer push. Sin este
+					atado, es fácil que el pipeline termine revisando reglas
+					distintas a las que ve un desarrollador localmente.
+				-->
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>${spotbugs.version}</version>
+				<configuration>
+					<excludeFilterFile>${project.basedir}/spotbugs-exclude.xml</excludeFilterFile>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

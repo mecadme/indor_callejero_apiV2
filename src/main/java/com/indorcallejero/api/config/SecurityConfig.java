@@ -35,11 +35,18 @@ import java.util.List;
  * coincide con ninguna regla termina en denyAll() ("fail-closed"). Un
  * desarrollador que agregue un controller nuevo y se olvide de esta clase
  * obtiene un 403 al probarlo, no un endpoint abierto al mundo.
+ *
+ * proxyBeanMethods = false + final: ningún @Bean de acá llama a otro
+ * @Bean por método (cada uno recibe lo que necesita como parámetro, no
+ * como this.otroBean()), así que no hace falta que Spring genere un proxy
+ * CGLIB de esta clase -- arranca más rápido y permite "final", que cierra
+ * el mismo CT_CONSTRUCTOR_THROW que en JwtService (el constructor puede
+ * lanzar IllegalStateException por el chequeo de SEC-12 de abajo).
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableMethodSecurity
-public class SecurityConfig {
+public final class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
