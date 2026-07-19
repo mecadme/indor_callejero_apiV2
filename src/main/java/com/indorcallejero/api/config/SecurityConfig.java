@@ -115,7 +115,7 @@ public final class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/api/users/**", "/api/teams/**", "/api/players/**",
                                 "/api/matches/**", "/api/standings/**", "/api/rounds/**", "/api/referees/**",
                                 "/api/ethics-officers/**", "/api/sponsors/**", "/api/information/**",
-                                "/api/facebook-videos/**")
+                                "/api/facebook-videos/**", "/api/player-statistics/**")
                         .authenticated()
                         .anyRequest().denyAll()
                 )
