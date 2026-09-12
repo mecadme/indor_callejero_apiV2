@@ -92,7 +92,7 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>3.0.3</version>
+			<version>3.1.1</version>
 		</dependency>
 		<!--
 			SEC-09 del audit: el original tomaba la extensión del nombre de
